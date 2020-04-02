@@ -1,7 +1,6 @@
 package mx.jean.spaceinvaders;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -44,7 +43,8 @@ class PantallaMenu extends Pantalla {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 super.clicked(event, x, y);
-                juego.setScreen(new PantallaSpaceInvaders(juego));
+                //juego.setScreen(new PantallaSpaceInvaders(juego));
+                juego.setScreen(new PantallaMario(juego));
             }
         });
 
