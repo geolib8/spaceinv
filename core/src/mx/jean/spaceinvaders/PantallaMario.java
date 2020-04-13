@@ -7,9 +7,19 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 class PantallaMario extends Pantalla {
     private final Juego juego;
@@ -19,6 +29,12 @@ class PantallaMario extends Pantalla {
     //AUDIO
     private Music audioFondo; //Largo
     private Sound efecto;  // cortos
+    //personaje
+    private Personaje mario;
+    //hud joystick
+    private Stage escenaHUD; //controles
+    private OrthographicCamera camaraHUD;
+    private Viewport vistaHUD;
 
     public PantallaMario(Juego juego) {
         this.juego = juego;
@@ -27,7 +43,47 @@ class PantallaMario extends Pantalla {
     @Override
     public void show() {
         cargarMapa();
-        Gdx.input.setInputProcessor(new ProcesadorEntrada());
+        cargarMario();
+        crearHUD();
+        //Gdx.input.setInputProcessor(new ProcesadorEntrada());
+        Gdx.input.setInputProcessor(escenaHUD);
+    }
+
+    private void crearHUD() {
+        camaraHUD = new OrthographicCamera(ANCHO, ALTO);
+        camaraHUD.position.set(ANCHO/2, ALTO/2,0);
+        camaraHUD.update();
+        vistaHUD = new StretchViewport(ANCHO,ALTO,camaraHUD);
+        Skin skin = new Skin();
+        skin.add("fondo", new Texture("padBack.png"));
+        skin.add("boton", new Texture("padKnob.png"));
+        Touchpad.TouchpadStyle estilo = new Touchpad.TouchpadStyle();
+        estilo.background = skin.getDrawable("fondo");
+        estilo.knob = skin.getDrawable("boton");
+        //crear pad
+        Touchpad pad = new Touchpad(64,estilo);
+        pad.setBounds(16,16,256,256);
+        pad.setColor(1,1,1,0.8f);
+        //eventos
+        pad.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                Touchpad pad = (Touchpad)actor;
+                if (pad.getKnobPercentX()>0 || pad.getKnobPercentX()<0){
+                    mario.setEstado(Personaje.EstadoMovimiento.CAMINANDO);
+                }else{
+                    mario.setEstado(Personaje.EstadoMovimiento.QUIETO);
+                }
+            }
+        });
+        escenaHUD = new Stage(vistaHUD);
+        escenaHUD.addActor(pad);
+    }
+
+    private void cargarMario() {
+        Texture texturaMario = new Texture("marioSprite.png");
+        mario = new Personaje(texturaMario,100,64);
+
     }
 
     private void cargarMapa() {
@@ -52,6 +108,12 @@ class PantallaMario extends Pantalla {
         batch.setProjectionMatrix(camara.combined);
         rendererMapa.setView(camara);
         rendererMapa.render();
+        batch.begin();
+        mario.render(batch);
+        batch.end();
+        //HUD
+        batch.setProjectionMatrix(camaraHUD.combined);
+        escenaHUD.draw();
     }
 
     @Override
